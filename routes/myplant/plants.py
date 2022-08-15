@@ -1,12 +1,9 @@
-from datetime import date
-import traceback
-from typing import Dict
 from fastapi import Depends, UploadFile, File, Form
 from fastapi.routing import APIRouter
-from database import MyPlant, scope, Schedule
+from database import scope, MyPlants
 
-from micro import VerifyBody, auth_method, CDN
-from utils import image as image_utils, response
+from micro import VerifyBody, auth_method
+from utils import response
 
 router = APIRouter(prefix='/plants')
 
@@ -27,50 +24,47 @@ async def register_plant(
         name = name.strip()
         plant = plant.strip()
 
-        schedule = {}
-
-        for s in last_schedule.split(','):
-            n, d = s.split(':')
-            schedule[n] = date.fromisoformat(d)
-
-        if not name or not plant: 
+        if not name or not plant:
             raise
     except:
-        return response.bad_request('name or plant or last_schedule')  # type: ignore
+        return response.bad_request('name or plant')  # type: ignore
     
-    _image = await image.read()
-
-    if not _image or not image_utils.verify_image(_image):
-        return response.bad_request('image')  # type: ignore
-
-    try:
-        img = CDN.upload_file(_image, f'uup:{user_id}, {plant}:{name}', plant)  # type: ignore
-        del _image
-        await image.close()
-    except:
-        traceback.print_exc()
-        return response.micro_error('cdn')
-
     with scope() as sess:
-        plant = MyPlant.session_add(
+        register_data = MyPlants.register(
             sess,
             user_id=user_id,
             plant=plant,
             name=name,
-            image=img,
+            image=await image.read(),
+            schedule=last_schedule,
         )
-        sess.flush()
-        sess.refresh(plant)
 
-        Schedule.session_init(sess, user_id, plant.id, schedule)  # type: ignore
+        if isinstance(register_data, str):
+            return response.bad_request(register_data)
 
-        sess.commit()
+        return register_data
 
-        return {
-            'myplant': {
-                'id': plant.id,
-                'name': plant.name,
-                'plant': plant.plant,
-                'image': plant.image,
-            }
-        }
+
+@router.post('/unregister')
+async def unregister_plant(
+        id: int = Form(),
+        token: VerifyBody = Depends(auth_method)
+    ):
+    if not token.success:
+        return token.payload
+
+    try:
+        user_id = token.payload.id  # type: ignore
+        
+        if id < 1:
+            raise
+    except:
+        return response.bad_request('plant')
+
+    with scope() as sess:
+        if not MyPlants.unregister(sess, user_id, id):
+            return response.not_found('not found plant')
+
+    return {
+        'success': True
+    }
