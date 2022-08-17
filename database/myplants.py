@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from utils import image
 
-from .schedules import ScheduleData, Schedules, ScheduleInitData
+from .schedules import ScheduleData, Schedules, ScheduleInitData, ScheduleToDoData
 from .info import PlantInfo
 from .myplant import MyPlant
 
@@ -15,6 +15,13 @@ class MyPlantRegisterData(BaseModel):
     image: str
     plant_id: int
     schedule: ScheduleInitData
+
+class MyPlantData(BaseModel):
+    id: int
+    name: str
+    image: str
+    plant_id: int
+    schedule: ScheduleToDoData | None
 
 class MyPlants:
     @staticmethod
@@ -70,3 +77,25 @@ class MyPlants:
 
         sess.delete(plant)
         return True
+
+    @staticmethod
+    def get_data(sess: Session, plant: MyPlant, include_schedule: bool = False) -> MyPlantData:
+        
+        return MyPlantData(
+            id=plant.id,  # type: ignore
+            name=plant.name,  # type: ignore
+            image=plant.image,  # type: ignore
+            plant_id=plant.plant_id,  # type: ignore
+            schedule=Schedules.session_get(sess, plant.user_id, plant.id, plant.plant_id) if include_schedule else None  # type: ignore
+        )
+
+    @staticmethod
+    def session_get_data(sess: Session, user_id: int, plant_id: int, include_schedule: bool = False) -> MyPlantData | None:
+        plant = MyPlant.session_get(sess, user_id, plant_id)
+        if not plant: return None
+        return MyPlants.get_data(sess, plant, include_schedule)
+
+    @staticmethod
+    def session_get_all_data(sess: Session, user_id: int, include_schedule: bool = False) -> list[MyPlantData]:
+        plants = MyPlant.session_get_all(sess, user_id)
+        return [MyPlants.get_data(sess, plant, include_schedule) for plant in plants]

@@ -31,6 +31,10 @@ class MyPlant(Base):
         return sess.query(MyPlant).filter(MyPlant.id == id, MyPlant.user_id == user_id).first()
     
     @staticmethod
+    def session_get_all(sess: Session, user_id: int) -> list[MyPlant]:
+        return sess.query(MyPlant).filter(MyPlant.user_id == user_id).all()
+
+    @staticmethod
     def session_exists(sess: Session, user_id: int, id: int) -> bool:
         return sess.query(exists().where(MyPlant.id == id, MyPlant.user_id == user_id)).scalar()
 

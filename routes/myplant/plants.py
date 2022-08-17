@@ -11,7 +11,7 @@ router = APIRouter(prefix='/plants')
 @router.post('/register')
 async def register_plant(
         name: str = Form(min_length=1, max_length=50),
-        plant: str = Form(min_length=1, max_length=100),
+        plant_id: int = Form(...),
         last_schedule: str = Form(max_length=200),
         token: VerifyBody = Depends(auth_method),
         image: UploadFile = File(...)
@@ -22,9 +22,8 @@ async def register_plant(
     try:
         user_id = token.payload.id  # type: ignore
         name = name.strip()
-        plant = plant.strip()
-
-        if not name or not plant:
+        
+        if plant_id < 1 or not name:
             raise
     except:
         return response.bad_request('name or plant')  # type: ignore
@@ -33,7 +32,7 @@ async def register_plant(
         register_data = MyPlants.register(
             sess,
             user_id=user_id,
-            plant=plant,
+            plant=plant_id,
             name=name,
             image=await image.read(),
             schedule=last_schedule,
@@ -68,3 +67,38 @@ async def unregister_plant(
     return {
         'success': True
     }
+
+
+@router.get('/{id}')
+async def get_plant(
+        id: int,
+        token: VerifyBody = Depends(auth_method),
+        include_schedule: bool = False
+    ):
+    if not token.success:
+        return token.payload
+
+    user_id: int = token.payload.id  # type: ignore
+
+    with scope() as sess:
+        plant = MyPlants.session_get_data(sess, user_id, id, include_schedule)
+
+        if not plant:
+            return response.not_found('not found plant')
+
+        return plant
+
+@router.get('/')
+async def get_plants(
+        token: VerifyBody = Depends(auth_method),
+        include_schedule: bool = False
+    ):
+    if not token.success:
+        return token.payload
+
+    user_id: int = token.payload.id  # type: ignore
+
+    with scope() as sess:
+        plants = MyPlants.session_get_all_data(sess, user_id, include_schedule)
+
+        return plants

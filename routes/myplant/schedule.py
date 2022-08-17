@@ -1,17 +1,29 @@
 from fastapi import Depends, Form
 from fastapi.routing import APIRouter
 from database import MyPlant, scope, Schedules
-
 from micro import VerifyBody, auth_method
 from utils import response
 
 router = APIRouter(prefix='/schedule')
 
+@router.get('/today')
+async def get_today_schedule(
+    token: VerifyBody = Depends(auth_method)
+):
+    if not token.success:
+        return token.payload
+
+    user_id = token.payload.id  # type: ignore
+    
+    with scope() as sess:
+        return list(Schedules.session_get_all(sess, MyPlant.session_get_all(sess, user_id)))
+
+
 @router.get('/{id}/today')
 async def today_schedule(
-        id: int,
-        token: VerifyBody = Depends(auth_method)
-    ):
+    id: int,
+    token: VerifyBody = Depends(auth_method)
+):
     if not token.success:
         return token.payload
 
@@ -33,10 +45,10 @@ async def today_schedule(
 
 @router.post('/{id}/done')
 async def done_schedule(
-        id: int,
-        schedule: str = Form(min_length=1, max_length=50),
-        token: VerifyBody = Depends(auth_method)
-    ):
+    id: int,
+    schedule: str = Form(min_length=1, max_length=50),
+    token: VerifyBody = Depends(auth_method)
+):
     if not token.success:
         return token.payload
 

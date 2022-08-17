@@ -1,9 +1,11 @@
 from __future__ import annotations
 from datetime import date, timedelta
+from typing import Iterable, Iterator
 from pydantic import BaseModel
 import traceback
 from sqlalchemy.orm import Session
 
+from .myplant import MyPlant
 from .schedule import Schedule
 from .info import CycleData, PlantInfo
 
@@ -68,7 +70,6 @@ class ScheduleToDoData(BaseModel):
 
 class ScheduleInitData(BaseModel):
     cycle: CycleData
-    schedule: ScheduleData
 
 class Schedules:
     @staticmethod
@@ -89,8 +90,7 @@ class Schedules:
         last_schedule.session_add(sess, user_id, myplant_id)
 
         return ScheduleInitData(
-            cycle=cycle,
-            schedule=last_schedule
+            cycle=cycle
         )
 
     @staticmethod
@@ -118,6 +118,13 @@ class Schedules:
             items=items,
             today=today
         )
+    
+    @staticmethod
+    def session_get_all(sess: Session, plants: list[MyPlant]) -> Iterable[ScheduleToDoData]:
+        for plant in plants:
+            schedule = Schedules.session_get(sess, plant.user_id, plant.id, plant.plant_id)  # type: ignore
+            if schedule is None: continue
+            yield schedule
 
     @staticmethod
     def session_set_done(sess: Session, user_id: int, myplant_id: int, plant_id: int, schedule: str) -> str | ScheduleToDoItem:

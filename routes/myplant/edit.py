@@ -1,6 +1,6 @@
 from fastapi import Depends, UploadFile, File, Form
 from fastapi.routing import APIRouter
-from database import MyPlant, scope
+from database import MyPlant, scope, MyPlants
 
 from micro import VerifyBody, auth_method, CDN
 from utils import response
@@ -49,9 +49,4 @@ async def edit_plant(
         sess.add(plant)
         sess.commit()
 
-        return {
-            'id': plant.id,
-            'plant_id': plant.plant_id,
-            'name': plant.name,
-            'image': plant.image,
-        }
+        return MyPlants.get_data(sess, plant)
