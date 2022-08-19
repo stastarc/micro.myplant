@@ -7,7 +7,6 @@ from utils import response
 
 router = APIRouter(prefix='/plants')
 
-
 @router.post('/register')
 async def register_plant(
         name: str = Form(min_length=1, max_length=50),
