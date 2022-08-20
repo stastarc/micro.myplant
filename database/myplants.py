@@ -21,6 +21,7 @@ class MyPlantData(BaseModel):
     name: str
     image: str
     plant_id: int
+    plant_name: str
     schedule: ScheduleToDoData | None
 
 class MyPlants:
@@ -86,6 +87,7 @@ class MyPlants:
             name=plant.name,  # type: ignore
             image=plant.image,  # type: ignore
             plant_id=plant.plant_id,  # type: ignore
+            plant_name=PlantInfo.session_get_name(sess, plant.plant_id) or '알수없음',  # type: ignore
             schedule=Schedules.session_get(sess, plant.user_id, plant.id, plant.plant_id) if include_schedule else None  # type: ignore
         )
 

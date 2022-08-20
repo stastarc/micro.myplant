@@ -58,6 +58,13 @@ class PlantInfo(Base):
             return sess.query(PlantInfo).filter(PlantInfo.id == plant).first()
     
     @staticmethod
+    def session_get_name(sess: Session, plant: str | int) -> str | None:
+        info = PlantInfo.session_get(sess, plant)
+        if info:
+            return info.plant.strip()  # type: ignore
+        return None
+
+    @staticmethod
     def session_get_id(sess: Session, plant: str) -> int | None:
         info = PlantInfo.session_get(sess, plant)
         if info is None:
