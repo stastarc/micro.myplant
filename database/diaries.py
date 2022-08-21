@@ -13,6 +13,10 @@ class DiaryData(BaseModel):
     images: list[str] = []
 
     @staticmethod
+    def empty(date: date):
+        return DiaryData(date=date, comment='', images=[])
+
+    @staticmethod
     def to_data(diary: Diary) -> DiaryData:
         return DiaryData(
             date=diary.created_at,  # type: ignore

@@ -1,8 +1,7 @@
 from datetime import date
 from fastapi import Depends, UploadFile, File, Form
 from fastapi.routing import APIRouter
-from pydantic import BaseModel
-from database import scope, Diaries
+from database import scope, Diaries, DiaryData
 
 from micro import VerifyBody, auth_method
 from utils import response
@@ -70,7 +69,7 @@ async def get_diary(
         )
 
         if data is None:
-            return response.not_found('not found diary') 
+            return DiaryData.empty(date)
 
         return data
 
