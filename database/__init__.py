@@ -6,3 +6,4 @@ from .diary import Diary
 from .diaries import Diaries, DiaryData
 from .myplants import MyPlants
 from .schedules import Schedules
+from .guides import Guide
