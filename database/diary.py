@@ -62,3 +62,12 @@ class Diary(Base):
             diary = Diary.session_add(sess, user_id, plant_id, comment, images, date)
 
         return diary
+
+    @staticmethod
+    def session_delete(sess: Session, user_id: int, plant_id: int, date: date) -> bool:
+        diary = Diary.session_get(sess, user_id, plant_id, date)
+        if diary:
+            sess.delete(diary)
+            return True
+
+        return False

@@ -71,3 +71,7 @@ class Diaries:
         data = await Diaries.session_set(sess, user_id, plant_id, date, comment, keep_images, images)
         if isinstance(data, str): return data
         return DiaryData.to_data(data)
+
+    @staticmethod
+    def session_delete(sess: Session, user_id: int, plant_id: int, date: date) -> bool:
+        return Diary.session_delete(sess, user_id, plant_id, date)

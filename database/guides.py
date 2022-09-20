@@ -8,8 +8,8 @@ from pydantic import BaseModel
 
 class Equipment(BaseModel):
     icon: str
-    action_name: str
     equipment_name: str
+    description: str
 
 class GuideData(BaseModel):
     action: str
@@ -41,15 +41,23 @@ class Guide(Base):
 
     @staticmethod
     def convert_to_guidedata(guide: 'Guide') -> GuideData:
+        equipments = []
+        
+        for equipment in guide.equipment.splitlines():
+            items = equipment.split(':')
+            
+            if len(items) != 3:
+                continue
+
+            equipments.append(Equipment(
+                icon=items[0],
+                equipment_name=items[1],
+                description=items[2]
+            ))
+
         return GuideData(
-            action=guide.action,
-            image=guide.image,
-            description=guide.description,
-            equipment=[
-                Equipment(
-                    icon=equipment.split(':')[1],
-                    action_name=equipment.split(':')[0],
-                    equipment_name=equipment.split(':')[2]
-                ) for equipment in guide.equipment.split("\n")
-            ]
+            action=guide.action,  # type: ignore
+            image=guide.image,  # type: ignore
+            description=guide.description,  # type: ignore
+            equipment=equipments
         )

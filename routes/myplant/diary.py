@@ -8,6 +8,24 @@ from utils import response
 
 router = APIRouter(prefix='/diary')
 
+@router.delete('/{plant_id}/{date}')
+async def set_diary(
+        date: date,
+        plant_id: int,
+        token: VerifyBody = Depends(auth_method)
+    ):
+    if not token.success:
+        return token.payload
+
+    with scope() as sess:
+        success = Diaries.session_delete(sess, token.user_id, plant_id, date)
+        if not success:
+            return response(404, "Unknown Diary")
+
+        return response(200, "Diary Deleted")
+
+    
+
 @router.post('/{plant_id}/{date}')
 async def set_diary(
         date: date,
